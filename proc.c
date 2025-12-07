@@ -141,6 +141,8 @@ userinit(void)
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
+// CAMBIO PROYECTO: prioridad inicial del primer proceso (init)
+  p->priority = 50;
 
   // this assignment to p->state lets other cores
   // run this process. the acquire forces the above
@@ -319,41 +321,49 @@ wait(void)
 //  - swtch to start running that process
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
+
+
+// Se hace el cambio  sheduler por prioridad 
 void
 scheduler(void)
 {
-  struct proc *p;
-  struct cpu *c = mycpu();
-  c->proc = 0;
-  
-  for(;;){
-    // Enable interrupts on this processor.
-    sti();
+  struct proc *p;       // puntero para recorrer los procesos
+  struct proc *best;    // puntero al proceso con mayor prioridad
+  struct cpu *c = mycpu();  // CPU actual
 
-    // Loop over process table looking for process to run.
-    acquire(&ptable.lock);
+  c->proc = 0;          // al inicio, la CPU no tiene ningún proceso corriendo
+
+  for(;;){              // bucle infinito del scheduler
+    sti();              // habilita interrupciones
+
+    acquire(&ptable.lock);  // bloquea la tabla de procesos para modificarla
+
+    best = 0;           // inicializa el mejor proceso como ninguno
+
+    // busca el proceso RUNNABLE con mayor prioridad
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
 
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
-
-      swtch(&(c->scheduler), p->context);
-      switchkvm();
-
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      c->proc = 0;
+      if(best == 0 || p->priority > best->priority)
+        best = p;
     }
-    release(&ptable.lock);
 
+    if(best != 0){      // si hay un proceso listo para correr
+      p = best;
+      c->proc = p;      // la CPU está ejecutando este proceso
+      switchuvm(p);     // cambia a la memoria del proceso
+      p->state = RUNNING;  // marca como ejecutándose
+      swtch(&c->scheduler, p->context);  // cambia de contexto: kernel → proceso
+      switchkvm();      // vuelve al kernel
+      c->proc = 0;      // la CPU queda libre
+    }
+
+    release(&ptable.lock);  // desbloquea la tabla de procesos
   }
 }
+
+
 
 // Enter scheduler.  Must hold only ptable.lock
 // and have changed proc->state. Saves and restores

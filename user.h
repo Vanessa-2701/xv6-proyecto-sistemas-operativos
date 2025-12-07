@@ -23,6 +23,9 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+// CAMBIO PROYECTO: syscall para ver estadisticas de memoria
+void memstat(void);
+
 
 // ulib.c
 int stat(const char*, struct stat*);

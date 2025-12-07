@@ -22,6 +22,10 @@ struct {
   int use_lock;
   struct run *freelist;
 } kmem;
+int free_pages;       // CAMBIO PROYECTO: paginas libres
+int allocated_pages;  // CAMBIO PROYECTO: paginas asignadas
+
+
 
 // Initialization happens in two phases.
 // 1. main() calls kinit1() while still using entrypgdir to place just
@@ -33,6 +37,10 @@ kinit1(void *vstart, void *vend)
 {
   initlock(&kmem.lock, "kmem");
   kmem.use_lock = 0;
+// CAMBIO PROYECTO: inicializamos contadores de paginas
+  free_pages = 0;
+  allocated_pages = 0;
+
   freerange(vstart, vend);
 }
 
@@ -72,6 +80,9 @@ kfree(char *v)
   r = (struct run*)v;
   r->next = kmem.freelist;
   kmem.freelist = r;
+  // CAMBIO PROYECTO: al liberar, aumenta paginas libres y disminuye asignadas
+  free_pages++;
+  allocated_pages--;
   if(kmem.use_lock)
     release(&kmem.lock);
 }
@@ -87,8 +98,12 @@ kalloc(void)
   if(kmem.use_lock)
     acquire(&kmem.lock);
   r = kmem.freelist;
-  if(r)
+  if(r){
     kmem.freelist = r->next;
+// CAMBIO PROYECTO: al asignar, disminuye paginas libres y aumenta asignadas
+    free_pages--;
+    allocated_pages++;
+}
   if(kmem.use_lock)
     release(&kmem.lock);
   return (char*)r;

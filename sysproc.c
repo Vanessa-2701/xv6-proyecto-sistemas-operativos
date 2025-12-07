@@ -6,6 +6,9 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
+extern int free_pages;       // CAMBIO PROYECTO: paginas libres
+extern int allocated_pages;  // CAMBIO PROYECTO: paginas asignadas
+
 
 int
 sys_fork(void)
@@ -88,4 +91,11 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+// CAMBIO PROYECTO: imprime estadisticas de paginas de memoria
+int
+sys_memstat(void)
+{
+  cprintf("Memoria: libres=%d asignadas=%d\n", free_pages, allocated_pages);
+  return 0;
 }
