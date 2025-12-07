@@ -8,3 +8,20 @@ En este repositorio se modificaron principalmente:
 - `sysproc.c`, `syscall.c`, `syscall.h`, `user.h`, `usys.S`: se implementó la syscall `memstat`.
 - `prio_test.c`: programa de usuario para probar el scheduler.
 - `memstat.c`: programa de usuario para invocar `memstat`.
+## Compilación y ejecución
+make
+make qemu
+
+## Pruebas
+### Scheduler por prioridad (`prio_test`)
+Dentro de xv6:
+prio_test &
+prio_test &
+prio_test &
+
+### Gestión de memoria (`memstat`)
+Dentro de xv6:
+memstat
+undefined
+
+
